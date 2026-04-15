@@ -1,0 +1,19 @@
+# Core data and numerical libraries
+numpy>=1.23.0
+pandas>=1.5.0
+scipy>=1.9.0
+
+# Data fetching
+yfinance>=0.2.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+plotly>=5.0.0
+
+# Web UI (optional)
+streamlit>=1.25.0
+
+# Additional utilities
+python-dateutil>=2.8.0
+pytz>=2023.3
