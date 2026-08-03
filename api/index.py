@@ -8,6 +8,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
 from typing import List, Any
+import math
 
 from simulation import MonteCarloSimulator
 from analytics import PortfolioAnalytics
@@ -23,11 +24,12 @@ def sanitize_json(obj: Any) -> Any:
         return [sanitize_json(v) for v in obj]
     elif isinstance(obj, np.ndarray):
         return [sanitize_json(v) for v in obj.tolist()]
-    elif isinstance(obj, (np.float32, np.float64, np.floating)):
-        return float(obj)
-    elif isinstance(obj, (np.int32, np.int64, np.integer)):
+    elif isinstance(obj, (float, np.float32, np.float64, np.floating)):
+        val = float(obj)
+        return None if math.isnan(val) or math.isinf(val) else val
+    elif isinstance(obj, (int, np.int32, np.int64, np.integer)):
         return int(obj)
-    elif isinstance(obj, (np.bool_)):
+    elif isinstance(obj, (bool, np.bool_)):
         return bool(obj)
     else:
         return obj
