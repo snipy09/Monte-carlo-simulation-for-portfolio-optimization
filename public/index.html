@@ -1,172 +1,140 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumPort | Monte Carlo & Markowitz Optimization Engine</title>
+    <title>QuantumPort | Portfolio Optimization Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            900: '#1e1b4b',
-                            accent: '#10b981'
-                        },
-                        darkbg: '#090d16',
-                        cardbg: '#111827',
-                        bordercolor: '#1f2937'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f8fafc; color: #0f172a; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
     </style>
 </head>
-<body class="bg-darkbg text-slate-100 min-h-screen">
-    <!-- Header -->
-    <header class="border-b border-gray-800 glass-panel sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-indigo-600/20 rounded-xl border border-indigo-500/30 text-indigo-400">
-                    <i class="fa-solid me-1 fa-chart-pie text-xl"></i>
+                <div class="w-8 h-8 bg-slate-900 text-white rounded flex items-center justify-center font-bold text-xs">
+                    QP
                 </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                        QuantumPort <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">v2.0 Vectorized</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Monte Carlo & Markowitz Efficient Frontier Optimization System</p>
+                <div class="flex items-center space-x-2">
+                    <span class="font-semibold text-sm text-slate-900">QuantumPort</span>
+                    <span class="text-xs text-slate-400">|</span>
+                    <span class="text-xs font-medium text-slate-500">Portfolio Optimization & Risk Analytics</span>
                 </div>
             </div>
             <div class="flex items-center space-x-4">
-                <span class="inline-flex items-center text-xs font-mono text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800/40">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span> Ledoit-Wolf Shrinkage Active
+                <span class="inline-flex items-center text-xs font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
+                    Ledoit-Wolf Covariance: Active
                 </span>
-                <a href="https://github.com/snipy09/MCS-Project" target="_blank" class="text-slate-400 hover:text-white text-sm flex items-center gap-1.5 transition">
-                    <i class="fab fa-github text-lg"></i> GitHub
+                <a href="https://github.com/snipy09/MCS-Project" target="_blank" class="text-xs text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1">
+                    <i class="fab fa-github"></i> Repository
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <!-- Controls Bar -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div class="flex-1">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Portfolio Tickers (Comma separated)</label>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <!-- Controls Panel -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                <div class="lg:col-span-6">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Asset Tickers (Comma Separated)</label>
                     <input type="text" id="tickerInput" value="AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, JNJ, V, WMT" 
-                           class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 font-mono text-sm focus:outline-none focus:border-indigo-500 transition">
+                           class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-900 font-mono focus:outline-none focus:border-slate-800">
                 </div>
-                <div class="w-full lg:w-48">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Simulations</label>
-                    <select id="simCount" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 text-sm font-mono focus:outline-none focus:border-indigo-500">
-                        <option value="2000">2,000 Portfolios</option>
-                        <option value="5000" selected>5,000 Portfolios</option>
-                        <option value="10000">10,000 Portfolios</option>
-                        <option value="20000">20,000 Portfolios</option>
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Simulations</label>
+                    <select id="simCount" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-900 font-mono focus:outline-none focus:border-slate-800">
+                        <option value="2000">2,000</option>
+                        <option value="5000" selected>5,000</option>
+                        <option value="10000">10,000</option>
+                        <option value="20000">20,000</option>
                     </select>
                 </div>
-                <div class="w-full lg:w-44">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Max Asset Weight</label>
-                    <select id="maxWeight" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 text-sm font-mono focus:outline-none focus:border-indigo-500">
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Max Weight</label>
+                    <select id="maxWeight" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-900 font-mono focus:outline-none focus:border-slate-800">
                         <option value="0.25">25% Max</option>
                         <option value="0.35" selected>35% Max</option>
                         <option value="0.50">50% Max</option>
                         <option value="1.0">100% Unconstrained</option>
                     </select>
                 </div>
-                <div class="flex items-end">
-                    <button onclick="runSimulation()" id="runBtn" class="w-full lg:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition cursor-pointer">
-                        <i class="fa-solid fa-bolt"></i> Run Optimization
+                <div class="lg:col-span-2">
+                    <button onclick="runSimulation()" id="runBtn" class="w-full px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                        <i class="fa-solid fa-play text-xs"></i> Calculate
                     </button>
                 </div>
             </div>
 
-            <!-- Presets -->
-            <div class="flex items-center gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
-                <span class="font-medium text-slate-300">Quick Presets:</span>
-                <button onclick="setPreset('AAPL, MSFT, GOOGL, AMZN, NVDA')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono transition">Tech Giants</button>
-                <button onclick="setPreset('JNJ, PG, WMT, KO, PEP, MCD')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono transition">Defensive Dividend</button>
-                <button onclick="setPreset('NVDA, AMD, TSLA, COIN, PLTR, MSTR')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono transition">High Beta / Growth</button>
-                <button onclick="setPreset('SPY, QQQ, EEM, TLT, GLD, VNQ')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono transition">Multi-Asset Allocation</button>
+            <!-- Asset Class Presets -->
+            <div class="flex items-center gap-2 text-xs border-t border-slate-100 pt-3">
+                <span class="font-medium text-slate-500">Presets:</span>
+                <button onclick="setPreset('AAPL, MSFT, GOOGL, AMZN, NVDA')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-mono transition">Tech Leaders</button>
+                <button onclick="setPreset('JNJ, PG, WMT, KO, PEP, MCD')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-mono transition">Defensive Dividend</button>
+                <button onclick="setPreset('NVDA, AMD, TSLA, COIN, PLTR')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-mono transition">High Growth</button>
+                <button onclick="setPreset('SPY, QQQ, EEM, TLT, GLD, VNQ')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-mono transition">Multi-Asset</button>
             </div>
         </div>
 
-        <!-- Metric KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="kpiCards">
-            <div class="glass-panel p-5 rounded-2xl border-l-4 border-emerald-500">
-                <p class="text-xs text-slate-400 font-medium">Max Sharpe Portfolio Return</p>
-                <h3 class="text-2xl font-bold text-emerald-400 mt-1 font-mono" id="kpiReturn">--</h3>
-                <p class="text-xs text-slate-400 mt-1" id="kpiVol">Volatility: --</p>
+        <!-- Metric Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Max Sharpe Return</span>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1" id="kpiReturn">--</div>
+                <span class="text-xs text-slate-500 font-mono mt-1 block" id="kpiVol">Volatility: --</span>
             </div>
-            <div class="glass-panel p-5 rounded-2xl border-l-4 border-indigo-500">
-                <p class="text-xs text-slate-400 font-medium">Max Sharpe Ratio</p>
-                <h3 class="text-2xl font-bold text-indigo-400 mt-1 font-mono" id="kpiSharpe">--</h3>
-                <p class="text-xs text-slate-400 mt-1" id="kpiSortino">Sortino Ratio: --</p>
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Max Sharpe Ratio</span>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1" id="kpiSharpe">--</div>
+                <span class="text-xs text-slate-500 font-mono mt-1 block" id="kpiSortino">Sortino: --</span>
             </div>
-            <div class="glass-panel p-5 rounded-2xl border-l-4 border-purple-500">
-                <p class="text-xs text-slate-400 font-medium">Minimum Volatility</p>
-                <h3 class="text-2xl font-bold text-purple-400 mt-1 font-mono" id="kpiMinVol">--</h3>
-                <p class="text-xs text-slate-400 mt-1" id="kpiMinVolReturn">Min Vol Return: --</p>
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Min Volatility</span>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1" id="kpiMinVol">--</div>
+                <span class="text-xs text-slate-500 font-mono mt-1 block" id="kpiMinVolReturn">Return: --</span>
             </div>
-            <div class="glass-panel p-5 rounded-2xl border-l-4 border-rose-500">
-                <p class="text-xs text-slate-400 font-medium">95% Value at Risk (VaR)</p>
-                <h3 class="text-2xl font-bold text-rose-400 mt-1 font-mono" id="kpiVaR">--</h3>
-                <p class="text-xs text-slate-400 mt-1" id="kpiCVaR">Expected Shortfall (CVaR): --</p>
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">95% Value at Risk (VaR)</span>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1" id="kpiVaR">--</div>
+                <span class="text-xs text-slate-500 font-mono mt-1 block" id="kpiCVaR">Expected Shortfall: --</span>
             </div>
         </div>
 
-        <!-- Main Chart Section: Efficient Frontier -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 glass-panel p-6 rounded-2xl flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line text-indigo-400"></i> Markowitz Efficient Frontier
-                        </h2>
-                        <p class="text-xs text-slate-400">Monte Carlo Sim Space (Scatter) vs. SLSQP Exact Quadratic Frontier Curve</p>
-                    </div>
+        <!-- Charts Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Efficient Frontier -->
+            <div class="lg:col-span-8 bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-semibold text-slate-900">Markowitz Efficient Frontier & Monte Carlo Simulations</h2>
+                    <span class="text-xs text-slate-500 font-mono">SciPy SLSQP Exact Curve</span>
                 </div>
-                <div id="frontierChart" class="w-full h-[450px]"></div>
+                <div id="frontierChart" class="w-full h-[420px]"></div>
             </div>
 
-            <!-- Portfolio Allocation Pie & Breakdown -->
-            <div class="glass-panel p-6 rounded-2xl flex flex-col justify-between">
+            <!-- Asset Allocation Table & Donut -->
+            <div class="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
                 <div>
-                    <h2 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                        <i class="fa-solid fa-pie-chart text-emerald-400"></i> Optimal Weights Allocation
-                    </h2>
-                    <p class="text-xs text-slate-400 mb-4">Maximum Sharpe Ratio Capital Distribution</p>
-                    <div id="pieChart" class="w-full h-[260px]"></div>
+                    <h2 class="text-sm font-semibold text-slate-900 mb-1">Optimal Weight Allocation</h2>
+                    <p class="text-xs text-slate-500 mb-3">Max Sharpe Portfolio Capital Breakdown ($100k)</p>
+                    <div id="pieChart" class="w-full h-[200px]"></div>
                 </div>
-                <div class="overflow-x-auto mt-4">
-                    <table class="w-full text-xs text-left text-slate-300">
-                        <thead class="text-slate-400 border-b border-slate-800">
+                <div class="overflow-x-auto border-t border-slate-100 pt-3">
+                    <table class="w-full text-xs text-left">
+                        <thead class="text-slate-500 border-b border-slate-200 font-medium">
                             <tr>
-                                <th class="py-2">Asset</th>
-                                <th class="py-2 text-right">Max Sharpe</th>
-                                <th class="py-2 text-right">Min Vol</th>
-                                <th class="py-2 text-right">Capital ($100k)</th>
+                                <th class="pb-1.5">Ticker</th>
+                                <th class="pb-1.5 text-right">Max Sharpe</th>
+                                <th class="pb-1.5 text-right">Min Vol</th>
+                                <th class="pb-1.5 text-right">Value ($)</th>
                             </tr>
                         </thead>
-                        <tbody id="allocationTableBody" class="font-mono divide-y divide-slate-800/50">
+                        <tbody id="allocationTableBody" class="font-mono divide-y divide-slate-100">
                         </tbody>
                     </table>
                 </div>
@@ -174,8 +142,10 @@
         </div>
     </main>
 
-    <footer class="border-t border-gray-800 py-6 text-center text-xs text-slate-500">
-        <p>QuantumPort Monte Carlo Engine • Built for Quantitative Portfolio Management • Powered by SciPy SLSQP & Ledoit-Wolf Shrinkage</p>
+    <footer class="border-t border-slate-200 bg-white py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            QuantumPort Quantitative Portfolio System • Built with Python, SciPy & Plotly
+        </div>
     </footer>
 
     <script>
@@ -187,7 +157,7 @@
         async function runSimulation() {
             const btn = document.getElementById('runBtn');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Simulating...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Calculating...`;
 
             const stocks = document.getElementById('tickerInput').value;
             const numSims = document.getElementById('simCount').value;
@@ -214,10 +184,10 @@
                 renderDashboard(data);
             } catch (err) {
                 console.error(err);
-                alert('Failed to connect to API server.');
+                alert('Connection to server failed.');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Run Optimization`;
+                btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> Calculate`;
             }
         }
 
@@ -225,20 +195,16 @@
             const maxSharpe = data.optimal_portfolios.max_sharpe;
             const minVol = data.optimal_portfolios.min_volatility;
 
-            // KPIs
             document.getElementById('kpiReturn').innerText = (maxSharpe.return * 100).toFixed(2) + '%';
             document.getElementById('kpiVol').innerText = 'Volatility: ' + (maxSharpe.volatility * 100).toFixed(2) + '%';
-            
             document.getElementById('kpiSharpe').innerText = maxSharpe.sharpe_ratio.toFixed(2);
-            document.getElementById('kpiSortino').innerText = 'Sortino Ratio: ' + (maxSharpe.sortino_ratio || maxSharpe.sharpe_ratio).toFixed(2);
-
+            document.getElementById('kpiSortino').innerText = 'Sortino: ' + (maxSharpe.sortino_ratio || maxSharpe.sharpe_ratio).toFixed(2);
             document.getElementById('kpiMinVol').innerText = (minVol.volatility * 100).toFixed(2) + '%';
-            document.getElementById('kpiMinVolReturn').innerText = 'Min Vol Return: ' + (minVol.return * 100).toFixed(2) + '%';
-
+            document.getElementById('kpiMinVolReturn').innerText = 'Return: ' + (minVol.return * 100).toFixed(2) + '%';
             document.getElementById('kpiVaR').innerText = (maxSharpe.var_95 * 100).toFixed(2) + '%';
             document.getElementById('kpiCVaR').innerText = 'Expected Shortfall: ' + (maxSharpe.cvar_95 * 100).toFixed(2) + '%';
 
-            // 1. Efficient Frontier Scatter Plot
+            // Plotly Efficient Frontier (Clean B2B White Theme)
             const scatterTrace = {
                 x: data.scatter_data.volatilities.map(v => v * 100),
                 y: data.scatter_data.returns.map(r => r * 100),
@@ -248,54 +214,51 @@
                 marker: {
                     size: 4,
                     color: data.scatter_data.sharpe_ratios,
-                    colorscale: 'Viridis',
+                    colorscale: 'Blues',
                     showscale: true,
-                    colorbar: { title: 'Sharpe Ratio', tickfont: { color: '#94a3b8' } }
+                    colorbar: { title: 'Sharpe', tickfont: { color: '#475569', size: 10 }, len: 0.8 }
                 }
             };
 
-            // Exact Markowitz Curve Trace
             const frontierTrace = {
                 x: data.efficient_frontier.map(p => p.volatility * 100),
                 y: data.efficient_frontier.map(p => p.return * 100),
                 mode: 'lines',
                 type: 'scatter',
-                name: 'Exact SLSQP Frontier',
-                line: { color: '#ec4899', width: 3 }
+                name: 'Markowitz Frontier (SLSQP)',
+                line: { color: '#0f172a', width: 2.5 }
             };
 
-            // Max Sharpe Point
             const maxSharpeTrace = {
                 x: [maxSharpe.volatility * 100],
                 y: [maxSharpe.return * 100],
                 mode: 'markers',
                 type: 'scatter',
-                name: 'Max Sharpe Portfolio',
-                marker: { size: 14, color: '#10b981', symbol: 'star' }
+                name: 'Max Sharpe',
+                marker: { size: 12, color: '#16a34a', symbol: 'star' }
             };
 
-            // Min Vol Point
             const minVolTrace = {
                 x: [minVol.volatility * 100],
                 y: [minVol.return * 100],
                 mode: 'markers',
                 type: 'scatter',
-                name: 'Min Volatility Portfolio',
-                marker: { size: 12, color: '#6366f1', symbol: 'diamond' }
+                name: 'Min Volatility',
+                marker: { size: 10, color: '#2563eb', symbol: 'diamond' }
             };
 
             const layoutFrontier = {
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                margin: { l: 50, r: 20, t: 20, b: 50 },
-                xaxis: { title: 'Annualized Volatility (%)', color: '#94a3b8', gridcolor: '#1f2937' },
-                yaxis: { title: 'Expected Annual Return (%)', color: '#94a3b8', gridcolor: '#1f2937' },
-                legend: { font: { color: '#e2e8f0' }, orientation: 'h', y: -0.2 }
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                margin: { l: 45, r: 15, t: 15, b: 45 },
+                xaxis: { title: 'Annualized Volatility (%)', color: '#475569', gridcolor: '#f1f5f9', zerolinecolor: '#e2e8f0' },
+                yaxis: { title: 'Expected Return (%)', color: '#475569', gridcolor: '#f1f5f9', zerolinecolor: '#e2e8f0' },
+                legend: { font: { color: '#334155', size: 11 }, orientation: 'h', y: -0.18 }
             };
 
             Plotly.newPlot('frontierChart', [scatterTrace, frontierTrace, maxSharpeTrace, minVolTrace], layoutFrontier);
 
-            // 2. Allocation Pie Chart
+            // Donut Chart
             const pieLabels = Object.keys(maxSharpe.weights_dict);
             const pieValues = Object.values(maxSharpe.weights_dict).map(w => w * 100);
 
@@ -303,41 +266,40 @@
                 labels: pieLabels,
                 values: pieValues,
                 type: 'pie',
-                hole: 0.4,
+                hole: 0.5,
                 textinfo: 'label+percent',
-                textposition: 'outside',
-                marker: { colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'] }
+                textposition: 'inside',
+                marker: { colors: ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#2563eb', '#16a34a'] }
             };
 
             const layoutPie = {
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                margin: { l: 20, r: 20, t: 10, b: 10 },
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                margin: { l: 10, r: 10, t: 10, b: 10 },
                 showlegend: false
             };
 
             Plotly.newPlot('pieChart', [pieTrace], layoutPie);
 
-            // 3. Allocation Table
+            // Allocation Table
             const tbody = document.getElementById('allocationTableBody');
             tbody.innerHTML = '';
             pieLabels.forEach(stock => {
                 const wSharpe = maxSharpe.weights_dict[stock] || 0;
                 const wMinVol = minVol.weights_dict[stock] || 0;
-                const allocAmt = (wSharpe * 100000).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                const allocAmt = (wSharpe * 100000).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="py-2 font-bold text-slate-100">${stock}</td>
-                        <td class="py-2 text-right text-emerald-400">${(wSharpe * 100).toFixed(2)}%</td>
-                        <td class="py-2 text-right text-indigo-400">${(wMinVol * 100).toFixed(2)}%</td>
-                        <td class="py-2 text-right text-slate-300">${allocAmt}</td>
+                        <td class="py-1.5 font-semibold text-slate-900">${stock}</td>
+                        <td class="py-1.5 text-right font-medium text-slate-900">${(wSharpe * 100).toFixed(1)}%</td>
+                        <td class="py-1.5 text-right text-slate-600">${(wMinVol * 100).toFixed(1)}%</td>
+                        <td class="py-1.5 text-right text-slate-700">${allocAmt}</td>
                     </tr>
                 `;
             });
         }
 
-        // Run initial simulation on load
         window.addEventListener('DOMContentLoaded', runSimulation);
     </script>
 </body>
