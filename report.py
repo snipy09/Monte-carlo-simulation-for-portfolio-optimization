@@ -121,7 +121,7 @@ class ReportGenerator:
             if 'trading_days' in self.data_summary:
                 report.append(
                     f"Trading days:            {self.data_summary['trading_days']}")
-            report.append()
+            report.append("")
 
         # Optimal Portfolios
         report.append("OPTIMAL PORTFOLIOS")
