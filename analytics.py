@@ -1,6 +1,6 @@
 """
 Analytical Markowitz Portfolio Optimization & Frontier Engine
-Supports exact quadratic optimization (SLSQP), Max Sharpe, Min Volatility, Max Sortino, and Efficient Frontier curve generation.
+Supports exact quadratic optimization (SLSQP), Max Sharpe, Min Volatility, Max Sortino, Equal-Weight, Risk-Parity, and Efficient Frontier curve generation.
 """
 
 import numpy as np
@@ -34,7 +34,6 @@ class PortfolioAnalytics:
         idx_sharpe = self.results['sharpe_ratio'].idxmax()
         idx_vol = self.results['volatility'].idxmin()
         idx_ret = self.results['return'].idxmax()
-        
         idx_sortino = self.results['sortino_ratio'].idxmax() if 'sortino_ratio' in self.results else idx_sharpe
 
         def build_portfolio_dict(idx):
@@ -53,7 +52,7 @@ class PortfolioAnalytics:
                 'sortino_ratio': sortino,
                 'var_95': var95,
                 'cvar_95': cvar95,
-                'weights': w,
+                'weights': w.tolist() if isinstance(w, np.ndarray) else w,
                 'weights_dict': {s: float(w[i]) for i, s in enumerate(self.stock_list)},
                 'allocation': {s: float(w[i] * config.INITIAL_CAPITAL) for i, s in enumerate(self.stock_list)}
             }
@@ -65,16 +64,55 @@ class PortfolioAnalytics:
             'max_sortino': build_portfolio_dict(idx_sortino)
         }
         
-        # Add exact SLSQP Optimization if mean_returns & cov_matrix are present
         if self.mean_returns is not None and self.cov_matrix is not None:
-            exact_sharpe = self.optimize_exact_max_sharpe()
-            exact_minvol = self.optimize_exact_min_volatility()
-            sim_optimal['exact_max_sharpe'] = exact_sharpe
-            sim_optimal['exact_min_volatility'] = exact_minvol
+            sim_optimal['exact_max_sharpe'] = self.optimize_exact_max_sharpe()
+            sim_optimal['exact_min_volatility'] = self.optimize_exact_min_volatility()
+            sim_optimal['equal_weight'] = self.calculate_equal_weight()
+            sim_optimal['risk_parity'] = self.calculate_risk_parity()
             
         return sim_optimal
 
-    def optimize_exact_max_sharpe(self, min_w: float = 0.0, max_w: float = 0.3) -> Dict:
+    def calculate_equal_weight(self) -> Dict:
+        """Benchmark 1/N Equal-Weighted Portfolio."""
+        w = np.ones(self.num_assets) / self.num_assets
+        ret = float(np.dot(w, self.mean_returns))
+        vol = float(np.sqrt(np.dot(w, np.dot(self.cov_matrix, w))))
+        sharpe = float((ret - self.risk_free_rate) / (vol + 1e-8))
+        var95 = float(1.645 * vol - ret)
+        cvar95 = float(2.06 * vol - ret)
+        return {
+            'return': ret,
+            'volatility': vol,
+            'sharpe_ratio': sharpe,
+            'var_95': var95,
+            'cvar_95': cvar95,
+            'weights': w.tolist(),
+            'weights_dict': {s: float(w[i]) for i, s in enumerate(self.stock_list)},
+            'allocation': {s: float(w[i] * config.INITIAL_CAPITAL) for i, s in enumerate(self.stock_list)}
+        }
+
+    def calculate_risk_parity(self) -> Dict:
+        """Inverse-volatility risk parity benchmark."""
+        diag_vol = np.sqrt(np.diag(self.cov_matrix))
+        inv_vol = 1.0 / (diag_vol + 1e-8)
+        w = inv_vol / np.sum(inv_vol)
+        ret = float(np.dot(w, self.mean_returns))
+        vol = float(np.sqrt(np.dot(w, np.dot(self.cov_matrix, w))))
+        sharpe = float((ret - self.risk_free_rate) / (vol + 1e-8))
+        var95 = float(1.645 * vol - ret)
+        cvar95 = float(2.06 * vol - ret)
+        return {
+            'return': ret,
+            'volatility': vol,
+            'sharpe_ratio': sharpe,
+            'var_95': var95,
+            'cvar_95': cvar95,
+            'weights': w.tolist(),
+            'weights_dict': {s: float(w[i]) for i, s in enumerate(self.stock_list)},
+            'allocation': {s: float(w[i] * config.INITIAL_CAPITAL) for i, s in enumerate(self.stock_list)}
+        }
+
+    def optimize_exact_max_sharpe(self, min_w: float = 0.0, max_w: float = 0.35) -> Dict:
         """SciPy SLSQP exact Maximum Sharpe Ratio optimization."""
         bounds = tuple((min_w, max_w) for _ in range(self.num_assets))
         constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0})
@@ -91,17 +129,21 @@ class PortfolioAnalytics:
         ret = float(np.dot(opt_w, self.mean_returns))
         vol = float(np.sqrt(np.dot(opt_w, np.dot(self.cov_matrix, opt_w))))
         sharpe = float((ret - self.risk_free_rate) / vol)
+        var95 = float(1.645 * vol - ret)
+        cvar95 = float(2.06 * vol - ret)
         
         return {
             'return': ret,
             'volatility': vol,
             'sharpe_ratio': sharpe,
-            'weights': opt_w,
+            'var_95': var95,
+            'cvar_95': cvar95,
+            'weights': opt_w.tolist(),
             'weights_dict': {s: float(opt_w[i]) for i, s in enumerate(self.stock_list)},
             'allocation': {s: float(opt_w[i] * config.INITIAL_CAPITAL) for i, s in enumerate(self.stock_list)}
         }
 
-    def optimize_exact_min_volatility(self, min_w: float = 0.0, max_w: float = 0.3) -> Dict:
+    def optimize_exact_min_volatility(self, min_w: float = 0.0, max_w: float = 0.35) -> Dict:
         """SciPy SLSQP exact Minimum Volatility optimization."""
         bounds = tuple((min_w, max_w) for _ in range(self.num_assets))
         constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0})
@@ -115,18 +157,22 @@ class PortfolioAnalytics:
         
         ret = float(np.dot(opt_w, self.mean_returns))
         vol = float(np.sqrt(np.dot(opt_w, np.dot(self.cov_matrix, opt_w))))
-        sharpe = float((ret - self.risk_free_rate) / vol)
+        sharpe = float((ret - self.risk_free_rate) / (vol + 1e-8))
+        var95 = float(1.645 * vol - ret)
+        cvar95 = float(2.06 * vol - ret)
         
         return {
             'return': ret,
             'volatility': vol,
             'sharpe_ratio': sharpe,
-            'weights': opt_w,
+            'var_95': var95,
+            'cvar_95': cvar95,
+            'weights': opt_w.tolist(),
             'weights_dict': {s: float(opt_w[i]) for i, s in enumerate(self.stock_list)},
             'allocation': {s: float(opt_w[i] * config.INITIAL_CAPITAL) for i, s in enumerate(self.stock_list)}
         }
 
-    def calculate_efficient_frontier_curve(self, n_points: int = 50, min_w: float = 0.0, max_w: float = 0.3) -> List[Dict]:
+    def calculate_efficient_frontier_curve(self, n_points: int = 40, min_w: float = 0.0, max_w: float = 0.35) -> List[Dict]:
         """Compute exact continuous Markowitz Efficient Frontier curve across target return spectrum."""
         if self.mean_returns is None or self.cov_matrix is None:
             return []
@@ -134,11 +180,11 @@ class PortfolioAnalytics:
         min_vol_port = self.optimize_exact_min_volatility(min_w, max_w)
         max_ret_port = float(np.max(self.mean_returns))
         
-        target_returns = np.linspace(min_vol_port['return'], max_ret_port * 0.98, n_points)
+        target_returns = np.linspace(min_vol_port['return'], max_ret_port * 0.95, n_points)
         frontier = []
         bounds = tuple((min_w, max_w) for _ in range(self.num_assets))
         
-        init_w = min_vol_port['weights']
+        init_w = np.array(min_vol_port['weights'])
         for target_r in target_returns:
             constraints = (
                 {'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0},
@@ -149,9 +195,9 @@ class PortfolioAnalytics:
                 w = res.x / np.sum(res.x)
                 v = float(np.sqrt(np.dot(w, np.dot(self.cov_matrix, w))))
                 r = float(np.dot(w, self.mean_returns))
-                sr = float((r - self.risk_free_rate) / v)
+                sr = float((r - self.risk_free_rate) / (v + 1e-8))
                 frontier.append({'return': r, 'volatility': v, 'sharpe_ratio': sr, 'weights': w.tolist()})
-                init_w = w  # Warm start next optimization point
+                init_w = w
                 
         return frontier
 
